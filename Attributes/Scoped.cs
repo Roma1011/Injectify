@@ -2,4 +2,4 @@ using Injectify.Attributes.@base;
 
 namespace Injectify.Attributes;
 
-public class Scoped:BaseLifetimeAttribute{}
+public class Scoped:BaseLifetimeAttribute;

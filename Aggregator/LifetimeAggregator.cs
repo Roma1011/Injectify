@@ -1,4 +1,5 @@
 using System.Reflection;
+using System.Text;
 using Injectify.Attributes;
 using Injectify.Attributes.@base;
 using Injectify.Exceptions;
@@ -12,6 +13,7 @@ public static class Aggregator
     {
         typeof(Singleton), typeof(Scoped), typeof(Transient)
     };
+
 //-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
     /// <summary>
     /// Scans the provided assembly for non-interface types annotated with 
@@ -26,33 +28,35 @@ public static class Aggregator
     /// <param name="assemblies">The assembly to scan for types with lifetime attributes.</param>
     /// <returns>The updated <see cref="IServiceCollection"/> with all discovered and registered services.</returns>
 //-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
-    public static IServiceCollection AggregateLifeTime(this IServiceCollection collection,params Assembly[] assemblies)
+    public static IServiceCollection AggregateLifeTime(this IServiceCollection collection, params Assembly[] assemblies)
     {
         ArgumentNullException.ThrowIfNull(collection);
         ArgumentNullException.ThrowIfNull(assemblies);
-        foreach (var assembly in assemblies)
+        foreach (Assembly assembly in assemblies)
         {
-            var typesWithLifetimeAttributes = assembly.DefinedTypes
-                .Where(t => !t.IsInterface && 
+            IEnumerable<TypeInfo> typesWithLifetimeAttributes = assembly.DefinedTypes
+                .Where(t => !t.IsInterface &&
                             t.CustomAttributes.Any(attr => LifetimeAttributes.Contains(attr.AttributeType)));
-        
-            foreach (var typeInfo in typesWithLifetimeAttributes)
+
+            foreach (TypeInfo typeInfo in typesWithLifetimeAttributes)
             {
-                if(typeInfo.CustomAttributes.Count(x => x.AttributeType.BaseType == typeof(BaseLifetimeAttribute)) > 1)
+                if (typeInfo.CustomAttributes.Count(x => x.AttributeType.BaseType == typeof(BaseLifetimeAttribute)) > 1)
                     throw new MultipleLifetimeException();
-            
-                var lifetimeAttributeType = typeInfo.CustomAttributes
+
+                Type lifetimeAttributeType = typeInfo.CustomAttributes
                     .First(attr =>
-                        attr.AttributeType == typeof(Scoped)    ||
+                        attr.AttributeType == typeof(Scoped) ||
                         attr.AttributeType == typeof(Transient) ||
                         attr.AttributeType == typeof(Singleton)).AttributeType;
 
-                var descriptor = LifeSeeker(typeInfo, lifetimeAttributeType);
+                ServiceDescriptor descriptor = LifeSeeker(typeInfo, lifetimeAttributeType);
                 collection.Add(descriptor);
             }
         }
+
         return collection;
     }
+
 //----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- 
     /// <summary>
     /// Creates a <see cref="ServiceDescriptor"/> based on the specified implementation type and its associated lifetime attribute.
@@ -64,20 +68,24 @@ public static class Aggregator
     /// <param name="lifetimeAttributeType">The type of the lifetime attribute (e.g., <see cref="Scoped"/>, <see cref="Transient"/>, or <see cref="Singleton"/>).</param>
     /// <returns>A <see cref="ServiceDescriptor"/> representing the service registration.</returns>
 //-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
-    public static ServiceDescriptor LifeSeeker(TypeInfo implementationType,Type lifetimeAttributeType)
+    private static ServiceDescriptor LifeSeeker(TypeInfo implementationType, Type lifetimeAttributeType)
     {
-        Type? serviceInterface=implementationType.ImplementedInterfaces.
-            FirstOrDefault(type=>type.CustomAttributes.
-                Any(customAttributeData => customAttributeData.AttributeType==lifetimeAttributeType));
-                
+        Type? serviceInterface = implementationType.ImplementedInterfaces.FirstOrDefault(type =>
+            type.CustomAttributes.Any(customAttributeData =>
+                customAttributeData.AttributeType == lifetimeAttributeType));
+
         if (serviceInterface is not null)
         {
             if (serviceInterface.IsGenericType)
                 serviceInterface = serviceInterface.GetGenericTypeDefinition();
-                    
-            return new ServiceDescriptor(serviceInterface,implementationType,GetLifetimeFromAttribute(lifetimeAttributeType));
-        } else {
-            return new ServiceDescriptor(implementationType,implementationType,GetLifetimeFromAttribute(lifetimeAttributeType));
+
+            return new ServiceDescriptor(serviceInterface, implementationType,
+                GetLifetimeFromAttribute(lifetimeAttributeType));
+        }
+        else
+        {
+            return new ServiceDescriptor(implementationType, implementationType,
+                GetLifetimeFromAttribute(lifetimeAttributeType));
         }
     }
 //-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
@@ -89,8 +97,8 @@ public static class Aggregator
 //-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
     private static ServiceLifetime GetLifetimeFromAttribute(Type attributeType)
     {
-        return attributeType == typeof(Scoped)    ? ServiceLifetime.Scoped    :
-               attributeType == typeof(Transient) ? ServiceLifetime.Transient :
+        return attributeType == typeof(Scoped) ? ServiceLifetime.Scoped :
+            attributeType == typeof(Transient) ? ServiceLifetime.Transient :
             ServiceLifetime.Singleton;
     }
 //-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
