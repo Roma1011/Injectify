@@ -1,10 +1,10 @@
 using System.Reflection;
-using DiÆon.Attributes;
-using DiÆon.Attributes.Base;
-using DiÆon.Exceptions;
+using Injectify.Attributes;
+using Injectify.Attributes.@base;
+using Injectify.Exceptions;
 using Microsoft.Extensions.DependencyInjection;
 
-namespace DiÆon.Aggregator;
+namespace Injectify.Aggregator;
 
 public static class Aggregator
 {
@@ -23,7 +23,7 @@ public static class Aggregator
     /// otherwise it registers the implementation type as itself.
     /// </summary>
     /// <param name="collection">The <see cref="IServiceCollection"/> to which the services will be added.</param>
-    /// <param name="assemblies">The assemblies to scan for types with lifetime attributes.</param>
+    /// <param name="assemblies">The assembly to scan for types with lifetime attributes.</param>
     /// <returns>The updated <see cref="IServiceCollection"/> with all discovered and registered services.</returns>
 //-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
     public static IServiceCollection AggregateLifeTime(this IServiceCollection collection,params Assembly[] assemblies)
@@ -64,11 +64,11 @@ public static class Aggregator
     /// <param name="lifetimeAttributeType">The type of the lifetime attribute (e.g., <see cref="Scoped"/>, <see cref="Transient"/>, or <see cref="Singleton"/>).</param>
     /// <returns>A <see cref="ServiceDescriptor"/> representing the service registration.</returns>
 //-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
-    private static ServiceDescriptor LifeSeeker(TypeInfo implementationType,Type lifetimeAttributeType)
+    public static ServiceDescriptor LifeSeeker(TypeInfo implementationType,Type lifetimeAttributeType)
     {
         Type? serviceInterface=implementationType.ImplementedInterfaces.
             FirstOrDefault(type=>type.CustomAttributes.
-                Any(customAttributeData => customAttributeData.AttributeType == lifetimeAttributeType));
+                Any(customAttributeData => customAttributeData.AttributeType==lifetimeAttributeType));
                 
         if (serviceInterface is not null)
         {

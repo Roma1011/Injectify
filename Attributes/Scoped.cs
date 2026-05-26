@@ -1,5 +1,5 @@
-using DiÆon.Attributes.Base;
+using Injectify.Attributes.@base;
 
-namespace DiÆon.Attributes;
+namespace Injectify.Attributes;
 
 public class Scoped:BaseLifetimeAttribute{}

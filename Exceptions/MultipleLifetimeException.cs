@@ -1,4 +1,4 @@
-namespace DiÆon.Exceptions;
+namespace Injectify.Exceptions;
 
 internal class MultipleLifetimeException:Exception
 {
