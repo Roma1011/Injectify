@@ -1,9 +1,8 @@
 ![ezgif-4d080faf903e07](https://github.com/user-attachments/assets/d0f022ea-e649-4ed0-b985-5ca98bd9d408)
 
-### https://github.com/Roma1011/Di-on
-### https://www.nuget.org/packages/Di%C3%86on
 
-# DiÆon
+
+# Injectify
 
 ## ⚡ Overview
 This project provides a utility for automatically registering services in a .NET application using custom attributes (`Singleton`, `Scoped`, and `Transient`). It simplifies the process of configuring dependency injection by scanning assemblies and registering services based on their lifetime.
@@ -17,14 +16,14 @@ This project provides a utility for automatically registering services in a .NET
 
 
 ### 📦 Installation
-Just clone or include the DiÆon class in your project. No external dependencies are required.
+Just clone or include the Injectify class in your project. No external dependencies are required.
 
 ## 📖 Usage
 ### 🔷 1. Define your services and annotate them with the appropriate lifetime attribute:
 
 ### Example 1: Scoped
 ```
-using DiÆon.Attributes;
+using Injectify.Attributes;
 
 [Scoped]
 public interface IScopedLogger
@@ -43,9 +42,9 @@ public class ScopedLogger : IScopedLogger
 ```
 ### Example 2: Singleton
 ```
-using DiÆon.Attributes;
+using Injectify.Attributes;
 
-using DiÆon.Attributes;
+using Injectify.Attributes;
 
 [Singleton]
 public class GlobalConfiguration
@@ -56,7 +55,7 @@ public class GlobalConfiguration
 
 ### Example 3: Transient
 ```
-using DiÆon.Attributes;
+using Injectify.Attributes;
 
 [Scoped]
 public interface IUserContext
@@ -88,7 +87,7 @@ public class AuditService
 ```
 ### Example 4: Generic
 ```
-using DiÆon.Attributes;
+using Injectify.Attributes;
 
 [Transient]
 public interface IRepository<T>
@@ -130,6 +129,6 @@ MultipleLifetimeException
 
 ```
 ### 👨‍💻 Contributing
-Feel free to submit issues or create pull requests to enhance DiÆon.
+Feel free to submit issues or create pull requests to enhance Injectify.
 
 
