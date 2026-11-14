@@ -13,6 +13,9 @@
     <Description>A lightweight utility for automatically registering services in .NET using custom attributes (Singleton, Scoped, and Transient) via assembly scanning.</Description>
     <PackageTags>dependency-injection;di;attributes;scanning;auto-register</PackageTags>
     <RepositoryUrl>https://github.com/Roma1011/Injectify</RepositoryUrl>
+
+    <!-- The test project lives under tests/; keep its sources out of the library. -->
+    <DefaultItemExcludes>$(DefaultItemExcludes);tests/**</DefaultItemExcludes>
   </PropertyGroup>
 
   <ItemGroup>

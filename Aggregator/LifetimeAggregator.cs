@@ -16,7 +16,7 @@ public static class Aggregator
 
 //-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
     /// <summary>
-    /// Scans the provided assembly for non-interface types annotated with 
+    /// Scans the provided assemblies for concrete (non-abstract, non-static) classes annotated with
     /// lifetime attributes (<see cref="Singleton"/>, <see cref="Scoped"/>, or <see cref="Transient"/>),
     /// and registers them in the <see cref="IServiceCollection"/> with the corresponding service lifetime.
     /// 
@@ -35,7 +35,7 @@ public static class Aggregator
         foreach (Assembly assembly in assemblies)
         {
             IEnumerable<TypeInfo> typesWithLifetimeAttributes = assembly.DefinedTypes
-                .Where(t => !t.IsInterface &&
+                .Where(t => t.IsClass && !t.IsAbstract &&
                             t.CustomAttributes.Any(attr => LifetimeAttributes.Contains(attr.AttributeType)));
 
             foreach (TypeInfo typeInfo in typesWithLifetimeAttributes)
@@ -76,7 +76,10 @@ public static class Aggregator
 
         if (serviceInterface is not null)
         {
-            if (serviceInterface.IsGenericType)
+            // Open generic implementations (Repository<T> : IRepository<T>) expose the interface
+            // built from their own type parameters; register it as the open IRepository<>.
+            // Closed interfaces (UserRepository : IRepository<User>) must stay closed.
+            if (serviceInterface.ContainsGenericParameters)
                 serviceInterface = serviceInterface.GetGenericTypeDefinition();
 
             return new ServiceDescriptor(serviceInterface, implementationType,
