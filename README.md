@@ -4,6 +4,11 @@
 
 # Injectify
 
+[![NuGet](https://img.shields.io/nuget/v/Injectify.Auto.svg)](https://www.nuget.org/packages/Injectify.Auto)
+[![NuGet downloads](https://img.shields.io/nuget/dt/Injectify.Auto.svg)](https://www.nuget.org/packages/Injectify.Auto)
+[![Release](https://github.com/Roma1011/Injectify/actions/workflows/release.yml/badge.svg)](https://github.com/Roma1011/Injectify/actions/workflows/release.yml)
+[![License: MIT](https://img.shields.io/github/license/Roma1011/Injectify.svg)](LICENSE)
+
 ## ⚡ Overview
 This project provides a utility for automatically registering services in a .NET application using custom attributes (`Singleton`, `Scoped`, and `Transient`). It simplifies the process of configuring dependency injection by scanning assemblies and registering services based on their lifetime.
 
@@ -16,13 +21,19 @@ This project provides a utility for automatically registering services in a .NET
 
 
 ### 📦 Installation
-Just clone or include the Injectify class in your project. No external dependencies are required.
+Install the [Injectify.Auto](https://www.nuget.org/packages/Injectify.Auto) package from NuGet:
+
+```bash
+dotnet add package Injectify.Auto
+```
+
+Supports .NET 8, 9 and 10. The only dependency is `Microsoft.Extensions.DependencyInjection`.
 
 ## 📖 Usage
 ### 🔷 1. Define your services and annotate them with the appropriate lifetime attribute:
 
 ### Example 1: Scoped
-```
+```csharp
 using Injectify.Attributes;
 
 [Scoped]
@@ -41,9 +52,7 @@ public class ScopedLogger : IScopedLogger
 }
 ```
 ### Example 2: Singleton
-```
-using Injectify.Attributes;
-
+```csharp
 using Injectify.Attributes;
 
 [Singleton]
@@ -54,7 +63,7 @@ public class GlobalConfiguration
 ```
 
 ### Example 3: Transient
-```
+```csharp
 using Injectify.Attributes;
 
 [Scoped]
@@ -86,7 +95,7 @@ public class AuditService
 }
 ```
 ### Example 4: Generic
-```
+```csharp
 using Injectify.Attributes;
 
 [Transient]
@@ -107,14 +116,19 @@ public class InMemoryRepository<T> : IRepository<T>
 }
 ```
 ### 🔷 2. Use the Aggregator class to register services in your Startup or Program class:
-```
-using DiÆon.Aggregator;
+```csharp
+using Injectify.Aggregator;
 using Microsoft.Extensions.DependencyInjection;
-using System.Reflection;
 
-IServiceCollection services=new ServiceCollection();
-services.AggregateLifeTime([typeof(Program).Assembly]);
+IServiceCollection services = new ServiceCollection();
+services.AggregateLifeTime(typeof(Program).Assembly);
+```
 
+In ASP.NET Core:
+```csharp
+using Injectify.Aggregator;
+
+builder.Services.AggregateLifeTime(typeof(Program).Assembly);
 ```
 ### Attributes
 ```
