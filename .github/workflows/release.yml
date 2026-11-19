@@ -1,0 +1,88 @@
+name: Release
+
+# Push a tag like v1.0.5 to build, test and publish that version.
+# "Run workflow" (manual) publishes the version currently in Injectify.csproj on the
+# selected branch; versions that already exist in a registry are skipped.
+on:
+  push:
+    tags: ["v*"]
+  workflow_dispatch:
+
+permissions:
+  contents: write   # create the GitHub release
+  packages: write   # push to GitHub Packages
+  id-token: write   # nuget.org Trusted Publishing (OIDC)
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: actions/setup-dotnet@v6
+        with:
+          dotnet-version: |
+            8.0.x
+            9.0.x
+            10.0.x
+
+      - name: Read package version
+        id: version
+        run: |
+          VERSION=$(dotnet msbuild Injectify.csproj -getProperty:Version)
+          echo "version=$VERSION" >> "$GITHUB_OUTPUT"
+          echo "Package version: $VERSION"
+          if [ "$GITHUB_REF_TYPE" = "tag" ] && [ "$GITHUB_REF_NAME" != "v$VERSION" ]; then
+            echo "::error::Tag $GITHUB_REF_NAME does not match <Version>$VERSION</Version> in Injectify.csproj"
+            exit 1
+          fi
+
+      - name: Build
+        run: dotnet build Injectify.csproj -c Release
+
+      - name: Test
+        run: dotnet test tests/Injectify.Tests -c Release
+
+      - name: Pack
+        run: dotnet pack Injectify.csproj -c Release --no-build -o artifacts
+
+      - name: Push to GitHub Packages
+        run: >
+          dotnet nuget push "artifacts/*.nupkg"
+          --source "https://nuget.pkg.github.com/${{ github.repository_owner }}/index.json"
+          --api-key "${{ secrets.GITHUB_TOKEN }}"
+          --skip-duplicate
+
+      # nuget.org publishing needs a Trusted Publishing policy on nuget.org
+      # (owner, repo, workflow file "release.yml") and the repository variable
+      # NUGET_USER set to your nuget.org profile name. Until then it is skipped.
+      - name: NuGet login (Trusted Publishing)
+        if: vars.NUGET_USER != ''
+        id: nuget-login
+        uses: NuGet/login@v1
+        with:
+          user: ${{ vars.NUGET_USER }}
+
+      - name: Push to nuget.org
+        if: vars.NUGET_USER != ''
+        run: >
+          dotnet nuget push "artifacts/*.nupkg"
+          --source https://api.nuget.org/v3/index.json
+          --api-key "${{ steps.nuget-login.outputs.NUGET_API_KEY }}"
+          --skip-duplicate
+
+      - name: nuget.org publishing not configured
+        if: vars.NUGET_USER == ''
+        run: echo "::warning::Repository variable NUGET_USER is not set, so nuget.org publishing was skipped."
+
+      - name: Create or update GitHub release
+        if: github.ref_type == 'tag'
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+        run: |
+          if gh release view "$GITHUB_REF_NAME" > /dev/null 2>&1; then
+            gh release upload "$GITHUB_REF_NAME" artifacts/*.nupkg --clobber
+          else
+            gh release create "$GITHUB_REF_NAME" artifacts/*.nupkg --title "$GITHUB_REF_NAME" --generate-notes --verify-tag
+          fi
