@@ -6,12 +6,19 @@
     <Nullable>enable</Nullable>
 
     <PackageId>Injectify.Auto</PackageId>
-    <Version>1.0.4</Version>
+    <Version>1.0.5</Version>
     <Authors>Roma 1011</Authors>
     <PackageLicenseExpression>MIT</PackageLicenseExpression>
     <Description>A lightweight utility for automatically registering services in .NET using custom attributes (Singleton, Scoped, and Transient) via assembly scanning.</Description>
     <PackageTags>dependency-injection;di;attributes;scanning;auto-register</PackageTags>
     <RepositoryUrl>https://github.com/Roma1011/Injectify</RepositoryUrl>
+    <PackageReadmeFile>README.md</PackageReadmeFile>
+
+    <!-- SourceLink (built into the .NET 8+ SDK): step into Injectify's sources while debugging. -->
+    <PublishRepositoryUrl>true</PublishRepositoryUrl>
+    <EmbedUntrackedSources>true</EmbedUntrackedSources>
+    <DebugType>embedded</DebugType>
+    <ContinuousIntegrationBuild Condition="'$(GITHUB_ACTIONS)' == 'true'">true</ContinuousIntegrationBuild>
 
     <!-- The test project lives under tests/; keep its sources out of the library. -->
     <DefaultItemExcludes>$(DefaultItemExcludes);tests/**</DefaultItemExcludes>
@@ -19,6 +26,10 @@
 
   <ItemGroup>
     <PackageReference Include="Microsoft.Extensions.DependencyInjection" Version="8.0.0" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Include="README.md" Pack="true" PackagePath="\" />
   </ItemGroup>
 
 </Project>

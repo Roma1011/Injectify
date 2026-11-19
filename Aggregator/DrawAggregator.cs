@@ -14,19 +14,22 @@ public static class DrawAggregator
 
         foreach (Assembly assembly in assemblies)
         {
-            IEnumerable<Type> services = assembly.GetTypes()
+            IEnumerable<Type> services = assembly.GetLoadableTypes()
                 .Where(t => t.GetCustomAttributes(typeof(BaseLifetimeAttribute), true).Any());
 
             foreach (Type service in services)
             {
-                ConstructorInfo? constructor = service.GetConstructors().FirstOrDefault();
+                // Like Microsoft.Extensions.DependencyInjection, use the public constructor with the most parameters.
+                ConstructorInfo? constructor = service.GetConstructors()
+                    .OrderByDescending(c => c.GetParameters().Length)
+                    .FirstOrDefault();
                 if (constructor != null)
                 {
                     foreach (ParameterInfo param in constructor.GetParameters())
                     {
                         string cleanServiceName = CleanTypeName(service.Name);
                         string cleanParamTypeName = CleanTypeName(param.ParameterType.Name);
-                        string paramName = param.Name;
+                        string paramName = param.Name ?? $"arg{param.Position}";
 
                         sb.AppendLine($"    {cleanServiceName} -->|{paramName}| {cleanParamTypeName}");
                     }

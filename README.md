@@ -7,7 +7,7 @@
 [![NuGet](https://img.shields.io/nuget/v/Injectify.Auto.svg)](https://www.nuget.org/packages/Injectify.Auto)
 [![NuGet downloads](https://img.shields.io/nuget/dt/Injectify.Auto.svg)](https://www.nuget.org/packages/Injectify.Auto)
 [![Release](https://github.com/Roma1011/Injectify/actions/workflows/release.yml/badge.svg)](https://github.com/Roma1011/Injectify/actions/workflows/release.yml)
-[![License: MIT](https://img.shields.io/github/license/Roma1011/Injectify.svg)](LICENSE)
+[![License: MIT](https://img.shields.io/github/license/Roma1011/Injectify.svg)](https://github.com/Roma1011/Injectify/blob/main/LICENSE)
 
 ## ⚡ Overview
 This project provides a utility for automatically registering services in a .NET application using custom attributes (`Singleton`, `Scoped`, and `Transient`). It simplifies the process of configuring dependency injection by scanning assemblies and registering services based on their lifetime.

@@ -34,7 +34,8 @@ public static class Aggregator
         ArgumentNullException.ThrowIfNull(assemblies);
         foreach (Assembly assembly in assemblies)
         {
-            IEnumerable<TypeInfo> typesWithLifetimeAttributes = assembly.DefinedTypes
+            IEnumerable<TypeInfo> typesWithLifetimeAttributes = assembly.GetLoadableTypes()
+                .Select(t => t.GetTypeInfo())
                 .Where(t => t.IsClass && !t.IsAbstract &&
                             t.CustomAttributes.Any(attr => LifetimeAttributes.Contains(attr.AttributeType)));
 

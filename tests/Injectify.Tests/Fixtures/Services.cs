@@ -50,3 +50,16 @@ public class ConcreteService : AbstractService;
 
 [Singleton]
 public static class StaticHelper;
+
+// Two constructors: DI uses the one with the most parameters, and so must the Mermaid graph.
+[Transient]
+public class MultiConstructorService
+{
+    public MultiConstructorService()
+    {
+    }
+
+    public MultiConstructorService(SelfSingleton singleton, SelfScoped scoped)
+    {
+    }
+}

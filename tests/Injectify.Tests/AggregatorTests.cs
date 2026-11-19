@@ -104,6 +104,17 @@ public class AggregatorTests
     }
 
     [Fact]
+    public void Skips_types_that_fail_to_load()
+    {
+        IServiceCollection services = new ServiceCollection();
+
+        services.AggregateLifeTime(new PartiallyLoadableAssembly(typeof(SelfSingleton)));
+
+        ServiceDescriptor descriptor = Assert.Single(services);
+        Assert.Equal(typeof(SelfSingleton), descriptor.ServiceType);
+    }
+
+    [Fact]
     public void Throws_on_null_arguments()
     {
         IServiceCollection services = new ServiceCollection();
