@@ -3,6 +3,15 @@ using System.Reflection;
 namespace Injectify.Tests;
 
 /// <summary>
+/// An assembly that contains exactly the given types. Lets a test scan one fixture on its own,
+/// including fixtures that are invalid on purpose.
+/// </summary>
+internal sealed class TypeListAssembly(params Type[] types) : Assembly
+{
+    public override Type[] GetTypes() => types;
+}
+
+/// <summary>
 /// An assembly whose <see cref="GetTypes"/> fails the way it does when a dependency is missing:
 /// it throws <see cref="ReflectionTypeLoadException"/> that still carries the types that did load.
 /// </summary>

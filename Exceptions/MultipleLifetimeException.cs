@@ -1,8 +1,15 @@
 namespace Injectify.Exceptions;
 
-internal class MultipleLifetimeException() : Exception(DefaultMessage)
+/// <summary>Thrown when a class has more than one lifetime attribute.</summary>
+public sealed class MultipleLifetimeException : InjectifyException
 {
-    private const string DefaultMessage = 
-        "Multiple lifetime attributes have been applied to the same service. " +
-        "A service must have only one lifetime declaration (e.g., Singleton, Scoped, or Transient).";
+    internal MultipleLifetimeException(Type implementationType)
+        : base($"'{implementationType.GetDisplayName()}' has multiple lifetime attributes. " +
+               "A service must have only one lifetime declaration (Singleton, Scoped, or Transient).")
+    {
+        ImplementationType = implementationType;
+    }
+
+    /// <summary>The class that has more than one lifetime attribute.</summary>
+    public Type ImplementationType { get; }
 }

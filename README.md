@@ -17,7 +17,8 @@ This project provides a utility for automatically registering services in a .NET
 
 - 🛠️ **Custom Attributes**: Use `[Singleton]`, `[Scoped]`, and `[Transient]` to define the lifetime of your services.
 - 🔄 **Automatic Registration**: Automatically scans assemblies and registers services with the appropriate lifetime in the `IServiceCollection`.
-- 🏷️ **Interface Binding**: Automatically binds implementations to their interfaces if defined.
+- 🏷️ **Interface Binding**: Pass the service type to the attribute, `[Scoped(typeof(IOrderService))]`, so only the class is marked and your interfaces stay free of attributes.
+- 🛡️ **Early Errors**: Conflicting lifetimes or a wrong service type throw a clear exception at startup instead of failing silently.
 - 🗺️ **Dependency Graph**: Generates a [Mermaid](https://mermaid.js.org) diagram of your services' constructor dependencies.
 
 
@@ -37,13 +38,12 @@ Supports .NET 8, 9 and 10. The only dependency is `Microsoft.Extensions.Dependen
 ```csharp
 using Injectify.Attributes;
 
-[Scoped]
 public interface IScopedLogger
 {
     void Log(string message);
 }
 
-[Scoped]
+[Scoped(typeof(IScopedLogger))]
 public class ScopedLogger : IScopedLogger
 {
     public void Log(string message)
@@ -67,6 +67,8 @@ public class GlobalConfiguration
 ```csharp
 using Injectify.Attributes;
 
+// Marking the interface with the same attribute as the class also binds them
+// (the way earlier versions worked). The lifetimes must match.
 [Scoped]
 public interface IUserContext
 {
@@ -99,13 +101,14 @@ public class AuditService
 ```csharp
 using Injectify.Attributes;
 
-[Transient]
 public interface IRepository<T>
 {
     void Add(T item);
 }
 
-[Transient]
+// Open generic class: pass the open generic service type.
+// A closed class (UserRepository : IRepository<User>) uses typeof(IRepository<User>).
+[Transient(typeof(IRepository<>))]
 public class InMemoryRepository<T> : IRepository<T>
 {
     private readonly List<T> _items = new();
@@ -116,20 +119,31 @@ public class InMemoryRepository<T> : IRepository<T>
     }
 }
 ```
-### 🔷 2. Use the Aggregator class to register services in your Startup or Program class:
+### 🔷 2. Register the services in your Startup or Program class:
 ```csharp
-using Injectify.Aggregator;
 using Microsoft.Extensions.DependencyInjection;
 
 IServiceCollection services = new ServiceCollection();
-services.AggregateLifeTime(typeof(Program).Assembly);
+services.AddInjectify(typeof(Program).Assembly);
 ```
 
 In ASP.NET Core:
 ```csharp
-using Injectify.Aggregator;
+builder.Services.AddInjectify(typeof(Program).Assembly);
+```
 
-builder.Services.AggregateLifeTime(typeof(Program).Assembly);
+`AddInjectify` lives in the `Microsoft.Extensions.DependencyInjection` namespace, next to `AddScoped` and `AddSingleton`. `AggregateLifeTime` from earlier versions still works, but is obsolete.
+
+Each class is registered as:
+1. the service type passed to its attribute, `[Scoped(typeof(IOrderService))]`; otherwise
+2. the first interface marked with the same attribute; otherwise
+3. the class itself.
+
+Registrations that need a factory or a condition stay in code, next to `AddInjectify`:
+```csharp
+builder.Services.AddInjectify(typeof(Program).Assembly);
+builder.Services.AddSingleton<IConnectionMultiplexer>(_ =>
+    ConnectionMultiplexer.Connect(builder.Configuration.GetConnectionString("Redis")!));
 ```
 
 ### 🔷 3. (Optional) Draw the dependency graph
@@ -143,7 +157,7 @@ Console.WriteLine(graph);
 
 For a service like this:
 ```csharp
-[Scoped]
+[Scoped(typeof(IOrderService))]
 public class OrderService(IRepository<Order> orders, Clock clock) : IOrderService
 {
     // ...
@@ -169,13 +183,19 @@ graph TD
 [Singleton]: Registers the service with a singleton lifetime.
 [Scoped]: Registers the service with a scoped lifetime.
 [Transient]: Registers the service with a transient lifetime.
+
+[Scoped(typeof(IService))]: Registers the class as IService. Works the same way for [Singleton] and [Transient].
+                            Use typeof(IService<>) for open generic classes.
 ```
 
 ### ⚠️ Error Handling
-```
-MultipleLifetimeException
+`AddInjectify` checks the attributes while it scans and throws at startup, so a mistake never turns into a missing registration later. All errors derive from `InjectifyException` (namespace `Injectify.Exceptions`) and name the classes involved.
 
-```
+| Exception | When |
+|---|---|
+| `MultipleLifetimeException` | A class has more than one lifetime attribute. |
+| `LifetimeMismatchException` | A class and its interface (or the service type passed to the attribute) have different lifetimes, e.g. a `[Transient]` class implementing a `[Scoped]` interface. |
+| `InvalidServiceTypeException` | The service type passed to the attribute is not implemented by the class, or mixes open and closed generics. |
 ### 👨‍💻 Contributing
 Feel free to submit issues or create pull requests to enhance Injectify.
 

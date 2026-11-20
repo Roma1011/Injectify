@@ -41,6 +41,31 @@ public class Repository<T> : IRepository<T>;
 [Transient]
 public class UserRepository : IRepository<User>;
 
+// Service type passed to the attribute: only the class is marked, the interface stays plain.
+public interface IPaymentGateway;
+
+[Scoped(typeof(IPaymentGateway))]
+public class CardPaymentGateway : IPaymentGateway, IDisposable
+{
+    public void Dispose()
+    {
+    }
+}
+
+// The service type passed to the attribute wins over an interface marked with the same attribute.
+public interface INotifier;
+
+[Scoped(typeof(INotifier))]
+public class EmailNotifier : IGreeter, INotifier;
+
+public interface IReadStore<T>;
+
+[Transient(typeof(IReadStore<>))]
+public class ReadStore<T> : IReadStore<T>;
+
+[Singleton(typeof(IReadStore<Order>))]
+public class OrderReadStore : IReadStore<Order>;
+
 // Types the container cannot instantiate must be skipped.
 [Scoped]
 public abstract class AbstractService;
