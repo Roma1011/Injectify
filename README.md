@@ -18,6 +18,7 @@ This project provides a utility for automatically registering services in a .NET
 - 🛠️ **Custom Attributes**: Use `[Singleton]`, `[Scoped]`, and `[Transient]` to define the lifetime of your services.
 - 🔄 **Automatic Registration**: Automatically scans assemblies and registers services with the appropriate lifetime in the `IServiceCollection`.
 - 🏷️ **Interface Binding**: Automatically binds implementations to their interfaces if defined.
+- 🗺️ **Dependency Graph**: Generates a [Mermaid](https://mermaid.js.org) diagram of your services' constructor dependencies.
 
 
 ### 📦 Installation
@@ -130,6 +131,39 @@ using Injectify.Aggregator;
 
 builder.Services.AggregateLifeTime(typeof(Program).Assembly);
 ```
+
+### 🔷 3. (Optional) Draw the dependency graph
+`DrawAggregator` builds a [Mermaid](https://mermaid.js.org) graph from the annotated classes. Each edge goes from a service to a constructor parameter and is labeled with the parameter name. Like `Microsoft.Extensions.DependencyInjection`, it uses the public constructor with the most parameters.
+```csharp
+using Injectify.Aggregator;
+
+string graph = DrawAggregator.GenerateMermaidGraph(typeof(Program).Assembly);
+Console.WriteLine(graph);
+```
+
+For a service like this:
+```csharp
+[Scoped]
+public class OrderService(IRepository<Order> orders, Clock clock) : IOrderService
+{
+    // ...
+}
+```
+
+it prints:
+```
+graph TD
+    OrderService -->|orders| IRepository
+    OrderService -->|clock| Clock
+```
+
+Paste the output into [mermaid.live](https://mermaid.live), or into a `mermaid` code block in any Markdown file on GitHub, and it renders as a diagram:
+```mermaid
+graph TD
+    OrderService -->|orders| IRepository
+    OrderService -->|clock| Clock
+```
+
 ### Attributes
 ```
 [Singleton]: Registers the service with a singleton lifetime.
